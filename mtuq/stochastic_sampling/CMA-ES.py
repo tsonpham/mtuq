@@ -1,11 +1,12 @@
 import numpy as np
+from mtuq.util.cmaes import Repair
 
 # class CMA_ES(object):
 
 
 class CMA_ES(object):
 
-    def __init__(self, parameters_list): # Initialise with the parameters to be used in optimisation.
+    def __init__(self, parameters_list, lmbda=None): # Initialise with the parameters to be used in optimisation.
         # Initialize parameters-tied variables.
         self._parameters = parameters_list
         self.n = len(self._parameters)
@@ -13,7 +14,10 @@ class CMA_ES(object):
         self.sigma = 2
 
         # Parameter setting
-        self.lmbda = 40
+        if not lmbda == None:
+            self.lmbda = lmbda
+        else:
+            self.lmbda = 40
         self.mu = np.floor(self.lmbda/2)
         a = 1 # Original author uses 1/2 in tutorial and 1 in publication
         self.weights = np.array([np.log(self.mu+a) - np.log(np.arange(1, self.mu+1))]).T
@@ -46,4 +50,7 @@ class CMA_ES(object):
         for i in range(self.lmbda):
             mutant = self.xmean + self.sigma * self.B @ (self.D * np.random.randn(self.n,1))
             self.mutants[:,i] = mutant.T
-        for
+        for _i, param in enumerate(self.mutants):
+            while array_in_bounds(self.mutants[_i], 0, 10) == False:
+                print('repairing '+self._parameters[_i].name+' with '+self._parameters[_i].repair+' method')
+                Repair(self._parameters[_i].repair, self.mutants[_i])
