@@ -36,9 +36,10 @@ def array_in_bounds(array, a=0, b=10):
     return True
 
 class Repair:
-    def __init__(self, method, data_array,lower_bound=0, upper_bound=10):
+    def __init__(self, method, data_array, mean, lower_bound=0, upper_bound=10):
         self.method = method
         self.data_array = data_array
+        self.mean = mean
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
 

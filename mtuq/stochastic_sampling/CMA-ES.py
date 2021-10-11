@@ -53,4 +53,4 @@ class CMA_ES(object):
         for _i, param in enumerate(self.mutants):
             while array_in_bounds(self.mutants[_i], 0, 10) == False:
                 print('repairing '+self._parameters[_i].name+' with '+self._parameters[_i].repair+' method')
-                Repair(self._parameters[_i].repair, self.mutants[_i])
+                Repair(self._parameters[_i].repair, self.mutants[_i], self.xmean[_i])
