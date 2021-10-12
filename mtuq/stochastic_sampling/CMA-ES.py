@@ -10,7 +10,7 @@ class CMA_ES(object):
         # Initialize parameters-tied variables.
         self._parameters = parameters_list
         self.n = len(self._parameters)
-        self.xmean = np.random.randn(self.n,1)
+        self.xmean = np.random.uniform(0,10,(self.n,1))
         self.sigma = 2
 
         # Parameter setting
