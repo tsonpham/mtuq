@@ -117,8 +117,12 @@ class Repair:
 
 
     def projection_to_midpoint(self):
-        # Project the particles onto the domain using the midpoint method
-        pass
+        # Project the particles onto the domain using the midpoint method (also reffered to as the Scaled Mutant)
+        # Get the farthest out-of-bounds mutant
+        largest_outlier = self.data_array[np.argmax(np.sqrt((self.data_array-(self.lower_bound+self.upper_bound)/2)**2))]
+
+        alpha = np.abs(((self.lower_bound+self.upper_bound)/2)/(largest_outlier - (self.lower_bound+self.upper_bound)/2))
+        self.data_array[:] = ((1-alpha)*5 + alpha*self.data_array[:])
 
     def rebound(self):
         # Rebound the particles
