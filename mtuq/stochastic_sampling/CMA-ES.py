@@ -51,6 +51,7 @@ class CMA_ES(object):
             mutant = self.xmean + self.sigma * self.B @ (self.D * np.random.randn(self.n,1))
             self.mutants[:,i] = mutant.T
         for _i, param in enumerate(self.mutants):
-            while array_in_bounds(self.mutants[_i], 0, 10) == False:
-                print('repairing '+self._parameters[_i].name+' with '+self._parameters[_i].repair+' method')
-                Repair(self._parameters[_i].repair, self.mutants[_i], self.xmean[_i])
+            if not self._parameters[_i].repair == None:
+                while array_in_bounds(self.mutants[_i], 0, 10) == False:
+                    print('repairing '+self._parameters[_i].name+' with '+self._parameters[_i].repair+' method')
+                    Repair(self._parameters[_i].repair, self.mutants[_i], self.xmean[_i])
