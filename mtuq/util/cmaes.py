@@ -66,9 +66,15 @@ class Repair:
         elif self.method == 'projection_to_midpoint':
             # Call the projection_to_midpoint function
             self.projection_to_midpoint()
-        elif self.method == 'rebound':
+        elif self.method == 'rand_based':
+            # Call the rand_based function
+            self.rand_based()
+        elif self.method == 'midpoint_base':
             # Call the rebound function
-            self.rebound()
+            self.midpoint_base()
+        elif self.method == 'midpoint_target':
+            # Call the rebound function
+            self.midpoint_target()
         else:
             print('Repair method not recognized')
 
@@ -124,6 +130,20 @@ class Repair:
         alpha = np.abs(((self.lower_bound+self.upper_bound)/2)/(largest_outlier - (self.lower_bound+self.upper_bound)/2))
         self.data_array[:] = ((1-alpha)*5 + alpha*self.data_array[:])
 
-    def rebound(self):
-        # Rebound the particles
-        pass
+    def rand_based(self):
+        # Redraw the out of bound mutants between the base vector (the CMA_ES.xmean used in draw_muants()) and the violated boundary.
+        # The base vector is the mean of the population.
+
+        self.data_array[self.l_oob] = np.random.uniform(self.mean, self.lower_bound, len(self.data_array[self.l_oob]))
+        self.data_array[self.u_oob] = np.random.uniform(self.mean, self.upper_bound, len(self.data_array[self.u_oob]))
+
+    def midpoint_base(self):
+        # the average of the base individual and the violated constraint replaces the infeasible coordinate value.
+        self.data_array[self.l_oob] = (self.mean + self.lower_bound)/2
+        self.data_array[self.u_oob] = (self.mean + self.upper_bound)/2
+
+    def midpoint_target(self):
+        # the average of the target individual and the violated constraint replaces the infeasible coordinate value.
+        target = 5
+        self.data_array[self.l_oob] = (target + self.lower_bound)/2
+        self.data_array[self.u_oob] = (target + self.upper_bound)/2
