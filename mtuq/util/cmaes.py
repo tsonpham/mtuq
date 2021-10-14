@@ -101,14 +101,17 @@ class Repair:
 
     def transformation(self):
         # Defines the '90%' values treshold
-        al = np.min([(self.upper_bound - self.lower_bound)/2,(1+np.linalg.norm(self.lower_bound))/20])
-        au = np.min([(self.upper_bound - self.lower_bound)/2,(1+np.linalg.norm(self.upper_bound))/20])
+            # Original thersholding implementation
+        al = np.min([(self.upper_bound - self.lower_bound)/2,(1+np.abs(self.lower_bound-2))/20])
+        au = np.min([(self.upper_bound - self.lower_bound)/2,(1+np.abs(self.upper_bound))/20])
+        # al = np.min([(self.upper_bound - self.lower_bound)/2, np.abs(self.upper_bound - self.lower_bound)*0.05])
+        # au = np.min([(self.upper_bound - self.lower_bound)/2, np.abs(self.upper_bound - self.lower_bound)*0.05])
         # Create the masks for the values out of self.lower_bound - al and self.upper_bound + au bounds
         mask_1 = self.data_array > (self.upper_bound + au)
         mask_2 = self.data_array < (self.lower_bound - al)
         # Reflect out of bounds values according to self.lower_bound - al and self.upper_bound + au.
-        self.data_array[mask_1] = 2*self.upper_bound + au - self.data_array[mask_1]
-        self.data_array[mask_2] = 2*self.lower_bound + al - self.data_array[mask_2]
+        self.data_array[mask_1] = (2*self.upper_bound + au) - self.data_array[mask_1]
+        self.data_array[mask_2] = 2*self.lower_bound - al - self.data_array[mask_2]
 
         # Create masks for the nonlinear transformation.
         mask_3 = (self.data_array >= (self.lower_bound + al)) & (self.data_array <= (self.upper_bound - au))
@@ -118,8 +121,8 @@ class Repair:
         # Nonlinear transform defined by R. Biedrzycki 2019, https://doi.org/10.1016/j.swevo.2019.100627
         # Note that reflected data are transformed according to the same principle which results in a periodic transformation
         self.data_array[mask_3] = self.data_array[mask_3]
-        self.data_array[mask_4] = self.lower_bound + (self.data_array[mask_4] - (self.lower_bound-al))**2/4*al
-        self.data_array[mask_5] = self.upper_bound - (self.data_array[mask_5] - (self.upper_bound+au))**2/4*al
+        self.data_array[mask_4] = self.lower_bound + (self.data_array[mask_4] - (self.lower_bound-al))**2/(4*al)
+        self.data_array[mask_5] = self.upper_bound - (self.data_array[mask_5] - (self.upper_bound-au))**2/(4*al)
 
 
     def projection_to_midpoint(self):
