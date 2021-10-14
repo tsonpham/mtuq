@@ -31,6 +31,9 @@ def logarithmic_transform(i, a, b):
     source:
     (https://cma-es.github.io/cmaes_sourcecode_page.html)
     """
+    d=np.log10(b)-np.log10(a)
+    transformed = 10**(np.log10(a)) * 10**(d*i/10)
+    return transformed
 
 def in_bounds(value, a=0, b=10):
     return value >= a and value <= b
