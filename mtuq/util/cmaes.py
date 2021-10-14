@@ -19,6 +19,19 @@ def inverse_linear_transform(transformed, a, b):
     i = (10*(transformed-a))/(b-a)
     return i
 
+def logarithmic_transform(i, a, b):
+    """ Logarithmic mapping suggested  by N. Hansen. particularly adapted to define Magnitude ranges of [1e^(n),1e^(n+3)].
+
+    Logarithmic map from [0,10] to [a,b], with `a` and `b` typically spaced by 3 to 4 orders of magnitudes.
+
+    example usage:
+    x = np.arange(0,11)
+    projected_data = logarithmic_transform(x, 1e1, 1e4)
+
+    source:
+    (https://cma-es.github.io/cmaes_sourcecode_page.html)
+    """
+
 def in_bounds(value, a=0, b=10):
     return value >= a and value <= b
 
