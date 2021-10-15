@@ -1,7 +1,7 @@
 import numpy as np
 
 class CMAESParameters:
-    def __init__(self, name, lower_bound, upper_bound, scaling = 'linear', initial=5, repair='bounce_back', **kwargs):
+    def __init__(self, name, lower_bound, upper_bound, scaling = 'linear', initial=5, repair='bounce_back', projection=None, **kwargs):
         self.name = name # Name of the parameter, used for printing and saving to file names etc...
         if lower_bound > upper_bound:
             raise ValueError('Lower bound is larger than the Upper Bound')
@@ -19,6 +19,7 @@ class CMAESParameters:
 
         self.initial = initial # Initial guess for parameter values, used to seed CMA-ES optimisation algorithm
         self.repair = repair # Repair method used to redraw samples out of the [0,10] range.
+        self.projection = projection
 
         if 'grid' in kwargs:
             self.grid = kwargs['grid'] # Grid of parameter values to use a non continuous optimization purposes. must be an array with initial and final value consistent with predefined lower_bound and upper_bound.

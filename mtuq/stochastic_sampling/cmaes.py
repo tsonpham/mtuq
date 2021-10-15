@@ -1,19 +1,30 @@
 import numpy as np
-from mtuq.util.cmaes import Repair, *
+from mtuq.util.cmaes import *
+from mtuq.util.math import to_mij, to_rtp, to_rho
+from mtuq.grid.force import to_force
+
+
 
 # class CMA_ES(object):
 
 
 class CMA_ES(object):
 
-    def __init__(self, parameters_list, lmbda=None, data=None, GFclient=None, origin=None): # Initialise with the parameters to be used in optimisation.
+    def __init__(self, parameters_list, lmbda=None, data=None, GFclient=None, origin=None, callback_function=None): # Initialise with the parameters to be used in optimisation.
+
         # Initialize parameters-tied variables.
         self._parameters = parameters_list
         self.n = len(self._parameters)
-        self.xmean = np.random.uniform(0,10,(self.n,1))
+        self.xmean = np.asarray([[val.initial for val in self._parameters]]).T
         self.sigma = 2
         self.origin = origin
-
+        if not callback_function == None:
+            self.callback = callback_function
+        elif len(parameters_list) == 6 or len(parameters_list) == 9:
+            self.callback = to_mij
+            self.mij_args = ['rho', 'v', 'w', 'kappa', 'sigma', 'h']
+        elif len(parameters_list) == 3:
+            self.callback = to_force
         # Parameter setting
         if not lmbda == None:
             self.lmbda = lmbda
@@ -46,7 +57,7 @@ class CMA_ES(object):
         self.chin = self.n**0.5 * (1 - 1 / ( 4 * self.n) + 1 / (21 * self.n**2))
         self.mutants = np.zeros((self.n, self.lmbda))
 
-    def draw_muants(self):
+    def draw_mutants(self):
         bounds = [0,10]
         for i in range(self.lmbda):
             mutant = self.xmean + self.sigma * self.B @ (self.D * np.random.randn(self.n,1))
@@ -57,10 +68,33 @@ class CMA_ES(object):
                     print('repairing '+self._parameters[_i].name+' with '+self._parameters[_i].repair+' method')
                     Repair(self._parameters[_i].repair, self.mutants[_i], self.xmean[_i])
 
-    def eval_norm(self):
+    def eval_fitness(self):
         # Project each parameter in their respective physical domain, according to their `scaling` property
+        self.transformed_mutants = np.zeros_like(self.mutants)
+        for _i, param in enumerate(self._parameters):
+            print(param.scaling)
+            if param.scaling == 'linear':
+                self.transformed_mutants[_i] = linear_transform(self.mutants[_i], param.lower_bound, param.upper_bound)
+            elif param.scaling == 'log':
+                self.transformed_mutants[_i] = logarithmic_transform(self.mutants[_i], param.lower_bound, param.upper_bound)
+            else:
+                raise ValueError("Unrecognized scaling, must be linear or log")
+            # Apply optional projection operator to each parameter
+            if not param.projection is None:
+                self.transformed_mutants[_i] = np.asarray(list(map(param.projection, self.transformed_mutants[_i])))
+        self.sources = np.ascontiguousarray(self.callback(*self.transformed_mutants))
 
         # Evaluate the misfit for each mutant of the population.
 
+    def create_origins(self, **kwargs):
+        catalog_origin = self.origin
 
-        pass
+        depths = np.array(
+             # depth in meters
+            [25000., 30000., 35000., 40000.,
+             45000., 50000., 55000., 60000.])
+
+        origins = []
+        for depth in depths:
+            origins += [catalog_origin.copy()]
+            setattr(origins[-1], 'depth_in_m', depth)
