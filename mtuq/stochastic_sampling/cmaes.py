@@ -1,17 +1,18 @@
 import numpy as np
-from mtuq.util.cmaes import Repair
+from mtuq.util.cmaes import Repair, *
 
 # class CMA_ES(object):
 
 
 class CMA_ES(object):
 
-    def __init__(self, parameters_list, lmbda=None): # Initialise with the parameters to be used in optimisation.
+    def __init__(self, parameters_list, lmbda=None, data=None, GFclient=None, origin=None): # Initialise with the parameters to be used in optimisation.
         # Initialize parameters-tied variables.
         self._parameters = parameters_list
         self.n = len(self._parameters)
         self.xmean = np.random.uniform(0,10,(self.n,1))
         self.sigma = 2
+        self.origin = origin
 
         # Parameter setting
         if not lmbda == None:
@@ -55,3 +56,11 @@ class CMA_ES(object):
                 while array_in_bounds(self.mutants[_i], 0, 10) == False:
                     print('repairing '+self._parameters[_i].name+' with '+self._parameters[_i].repair+' method')
                     Repair(self._parameters[_i].repair, self.mutants[_i], self.xmean[_i])
+
+    def eval_norm(self):
+        # Project each parameter in their respective physical domain, according to their `scaling` property
+
+        # Evaluate the misfit for each mutant of the population.
+
+
+        pass
