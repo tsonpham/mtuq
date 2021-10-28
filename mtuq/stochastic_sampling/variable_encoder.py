@@ -1,7 +1,7 @@
 import numpy as np
 
 class CMAESParameters:
-    def __init__(self, name, lower_bound, upper_bound, scaling = 'linear', initial=5, repair='bounce_back', projection=None, **kwargs):
+    def __init__(self, name, lower_bound, upper_bound, scaling = 'linear', initial=None, repair='bounce_back', projection=None, **kwargs):
         self.name = name # Name of the parameter, used for printing and saving to file names etc...
         if lower_bound > upper_bound:
             raise ValueError('Lower bound is larger than the Upper Bound')
@@ -13,11 +13,12 @@ class CMAESParameters:
             raise ValueError('Scaling must be either linear or log')
 
         self.scaling=scaling # Define the scaling type to rescale the randomly drawn parameter in[0,10] to a value between self.lower_bound and self.upper_bound
-
-        if initial < 0 or initial > 10:
+        if initial == None:
+            self.initial = np.random.uniform(0,10)
+        elif initial < 0 or initial > 10:
             raise ValueError('Initial value is outside of the expected bounds')
-
-        self.initial = initial # Initial guess for parameter values, used to seed CMA-ES optimisation algorithm
+        else:
+            self.initial = initial # Initial guess for parameter values, used to seed CMA-ES optimisation algorithm
         self.repair = repair # Repair method used to redraw samples out of the [0,10] range.
         self.projection = projection
 
