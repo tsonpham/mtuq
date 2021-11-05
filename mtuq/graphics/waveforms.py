@@ -21,15 +21,15 @@ from obspy.geodetics import gps2dist_azimuth
 # high-level plotting functions
 #
 
-def plot_waveforms1(filename, 
+def plot_waveforms1(filename,
         data,
         synthetics,
         stations,
         origin,
         header=None,
-        total_misfit=1., 
+        total_misfit=1.,
         normalize='maximum_amplitude',
-        station_labels=True, 
+        station_labels=True,
         trace_labels=True):
 
     """ Creates data/synthetics comparison figure with 3 columns (Z, R, T)
@@ -85,7 +85,7 @@ def plot_waveforms1(filename,
 
         for dat in stream_dat:
             component = dat.stats.channel[-1].upper()
-            weight = getattr(dat.attrs, 'weight', 1.)
+            weight = _getattr(dat, 'weight', 1.)
 
             if not weight:
                 continue
@@ -97,7 +97,7 @@ def plot_waveforms1(filename,
                 warn('Missing component, skipping...')
                 continue
 
-            _plot_ZRT(axes[ir], 1, dat, syn, component, 
+            _plot_ZRT(axes[ir], 1, dat, syn, component,
                 normalize, trace_labels, max_amplitude, total_misfit)
 
         ir += 1
@@ -107,7 +107,7 @@ def plot_waveforms1(filename,
 
 
 
-def plot_waveforms2(filename, 
+def plot_waveforms2(filename,
         data_bw,
         data_sw,
         synthetics_bw,
@@ -115,13 +115,13 @@ def plot_waveforms2(filename,
         stations,
         origin,
         header=None,
-        total_misfit_bw=1., 
-        total_misfit_sw=1., 
+        total_misfit_bw=1.,
+        total_misfit_sw=1.,
         normalize='maximum_amplitude',
-        station_labels=True, 
+        station_labels=True,
         trace_labels=True):
 
-    """ Creates data/synthetics comparison figure with 5 columns 
+    """ Creates data/synthetics comparison figure with 5 columns
    (Pn Z, Pn R, Rayleigh Z, Rayleigh R, Love T)
     """
     # how many stations have at least one trace?
@@ -175,7 +175,7 @@ def plot_waveforms2(filename,
 
         for dat in stream_dat:
             component = dat.stats.channel[-1].upper()
-            weight = getattr(dat.attrs, 'weight', 1.)
+            weight = _getattr(dat, 'weight', 1.)
 
             if not weight:
                 continue
@@ -187,7 +187,7 @@ def plot_waveforms2(filename,
                 warn('Missing component, skipping...')
                 continue
 
-            _plot_ZR(axes[ir], 1, dat, syn, component, 
+            _plot_ZR(axes[ir], 1, dat, syn, component,
                 normalize, trace_labels, max_amplitude_bw, total_misfit_bw)
 
 
@@ -200,7 +200,7 @@ def plot_waveforms2(filename,
 
         for dat in stream_dat:
             component = dat.stats.channel[-1].upper()
-            weight = getattr(dat.attrs, 'weight', 1.)
+            weight = _getattr(dat, 'weight', 1.)
 
             if not weight:
                 continue
@@ -244,7 +244,8 @@ def plot_data_greens1(filename,
     synthetics = greens.select(origin).get_synthetics(
         source, components, mode='map', inplace=True)
 
-    total_misfit = misfit(data, greens, source, set_attributes=True)
+    total_misfit = misfit(data, greens.select(origin), source,
+        set_attributes=True)
 
     # prepare figure header
     if 'header' in kwargs:
@@ -278,7 +279,7 @@ def plot_data_greens2(filename,
         source_dict,
         **kwargs):
 
-    """ Creates data/synthetics comparison figure with 5 columns 
+    """ Creates data/synthetics comparison figure with 5 columns
    (Pn Z, Pn R, Rayleigh Z, Rayleigh R, Love T)
 
     Different input arguments, same result as plot_waveforms2
@@ -294,9 +295,11 @@ def plot_data_greens2(filename,
     synthetics_sw = greens_sw.select(origin).get_synthetics(
         source, components_sw, mode='map', inplace=True)
 
-    total_misfit_bw = misfit_bw(data_bw, greens_bw, source, set_attributes=True)
-    total_misfit_sw = misfit_sw(data_sw, greens_sw, source, set_attributes=True)
+    total_misfit_bw = misfit_bw(data_bw, greens_bw.select(origin), source,
+        set_attributes=True)
 
+    total_misfit_sw = misfit_sw(data_sw, greens_sw.select(origin), source,
+        set_attributes=True)
 
     # prepare figure header
     if 'header' in kwargs:
@@ -323,9 +326,9 @@ def plot_data_greens2(filename,
 #
 
 
-def _initialize(nrows=None, ncolumns=None, column_width_ratios=None, 
+def _initialize(nrows=None, ncolumns=None, column_width_ratios=None,
     header=None, height=None, width=None, margin_top=0.25, margin_bottom=0.25,
-    margin_left=0.25, margin_right=0.25, header_height=1.5, 
+    margin_left=0.25, margin_right=0.25, header_height=1.5,
     station_labels=True, station_label_width=0.4):
 
     if header:
@@ -367,7 +370,7 @@ def _initialize(nrows=None, ncolumns=None, column_width_ratios=None,
         return fig, axes
 
 
-def _plot_ZRT(axes, ic, dat, syn, component, 
+def _plot_ZRT(axes, ic, dat, syn, component,
     normalize='maximum_amplitude', trace_labels=False,
     max_amplitude=1., total_misfit=1.):
 
@@ -400,7 +403,7 @@ def _plot_ZRT(axes, ic, dat, syn, component,
         _add_trace_labels(axis, dat, syn, total_misfit)
 
 
-def _plot_ZR(axes, ic, dat, syn, component, 
+def _plot_ZR(axes, ic, dat, syn, component,
     normalize='maximum_amplitude', trace_labels=False,
     max_amplitude=1., total_misfit=1.):
 
@@ -436,8 +439,8 @@ def _plot(axis, dat, syn, label=None):
     """
     t1,t2,nt,dt = _time_stats(dat)
 
-    start = getattr(syn.attrs, 'start', 0)
-    stop = getattr(syn.attrs, 'stop', len(syn.data))
+    start = _getattr(syn, 'start', 0)
+    stop = _getattr(syn, 'stop', len(syn.data))
 
     t = np.linspace(0,t2-t1,nt,dt)
     d = dat.data
@@ -445,7 +448,7 @@ def _plot(axis, dat, syn, label=None):
 
     axis.plot(t, d, 'k', linewidth=1.5,
         clip_on=False, zorder=10)
-    axis.plot(t, s[start:stop], 'r', linewidth=1.25, 
+    axis.plot(t, s[start:stop], 'r', linewidth=1.25,
         clip_on=False, zorder=10)
 
     # prevents traces from getting clipped
@@ -536,8 +539,8 @@ def _add_trace_labels(axis, dat, syn, total_misfit=1.):
 
     # display cross-correlation time shift
     time_shift = 0.
-    time_shift += getattr(syn.attrs, 'time_shift', np.nan)
-    time_shift += getattr(dat.attrs, 'static_time_shift', 0)
+    time_shift += _getattr(syn, 'time_shift', np.nan)
+    time_shift += _getattr(dat, 'static_time_shift', 0)
     axis.text(0.,(1/4.)*ymin, '%.2f' %time_shift, fontsize=11)
 
     # display maximum cross-correlation coefficient
@@ -552,7 +555,7 @@ def _add_trace_labels(axis, dat, syn, total_misfit=1.):
         axis.text(0.,(2/4.)*ymin, '%.2f' %max_cc, fontsize=11)
 
     # display percent of total misfit
-    misfit = getattr(syn.attrs, 'misfit', np.nan)
+    misfit = _getattr(syn, 'misfit', np.nan)
     misfit /= total_misfit
     if misfit >= 0.1:
         axis.text(0.,(3/4.)*ymin, '%.1f' %(100.*misfit), fontsize=11)
@@ -590,6 +593,15 @@ def _isempty(dataset):
         return True
     else:
         return bool(_count([dataset])==0)
+
+
+def _getattr(trace, name, *args):
+    if len(args)==1:
+        return getattr(trace.attrs, name, args[0])
+    elif len(args)==0:
+        return getattr(trace.attrs, name)
+    else:
+        raise TypeError("Wrong number of arguments")
 
 
 def _max(dat, syn):
@@ -650,5 +662,3 @@ def _get_tag(tags, pattern):
             return parts[1]
     else:
         return None
-
-
