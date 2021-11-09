@@ -130,11 +130,12 @@ class parallel_CMA_ES(object):
         # Load, convolve and process local greens function
         start_time = MPI.Wtime()
         self.local_greens = db.get_greens_tensors(stations, self.origins)
-        end_time = MPI.Wtime()
-        if self.rank == 0:
-            print("Computation time: " + str(end_time-start_time))
         self.local_greens.convolve(wavelet)
         self.local_greens = self.local_greens.map(process)
+        end_time = MPI.Wtime()
+        if self.rank == 0:
+            print("Fetching and processing greens: " + str(end_time-start_time))
+
 
         self.local_misfit_val = [misfit(data, self.local_greens, np.array([self.sources[_i]])) for _i, origin in enumerate(self.origins)]
         self.local_misfit_val = np.asarray(self.local_misfit_val).T[0]
