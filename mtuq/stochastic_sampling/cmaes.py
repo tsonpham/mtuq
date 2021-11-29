@@ -86,7 +86,7 @@ class CMA_ES(object):
         return mean
 
     # Evaluate the misfit for each mutant of the population.
-    def eval_fitness(self, data, stations, db, process, misfit):
+    def eval_fitness(self, data, stations, db, process, misfit, wavelet):
         # Project each parameter in their respective physical domain, according to their `scaling` property
         self.transformed_mutants = np.zeros_like(self.mutants)
         for _i, param in enumerate(self._parameters):
@@ -106,8 +106,10 @@ class CMA_ES(object):
         self.create_origins()
         for X in self.origins:
             print(X)
-
-        self.misfit_val = [misfit(data, db.get_greens_tensors(stations, origin).map(process), np.array([self.sources[_i]])) for _i, origin in enumerate(self.origins)]
+        self.local_greens = db.get_greens_tensors(stations, self.origins)
+        self.local_greens.convolve(wavelet)
+        self.local_greens = self.local_greens.map(process)
+        self.misfit_val = [misfit(data, self.local_greens.select(origin), np.array([self.sources[_i]])) for _i, origin in enumerate(self.origins)]
         self.misfit_val = np.asarray(self.misfit_val).T[0]
 
         self.counteval += self.lmbda
