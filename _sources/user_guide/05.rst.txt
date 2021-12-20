@@ -1,0 +1,17 @@
+
+
+Visualization galleries
+=======================
+
+As illustrated in the `examples <https://github.com/uafgeotools/mtuq/blob/master/examples>`_, MTUQ can be used to carry out grid searches over moment tensors, double couples, and forces. 
+
+The output of `mtuq.grid_search` in each of these cases is a data structure that can be passed directly to visualization functions.  Examples are given below.
+ 
+
+.. toctree::
+   :maxdepth: 1
+
+   gallery_mt
+   gallery_force
+   gallery_origin
+
