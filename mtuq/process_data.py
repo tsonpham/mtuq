@@ -11,7 +11,7 @@ from os.path import basename, exists
 from mtuq.util import AttribDict, warn
 from mtuq.util.cap import WeightParser, taper
 from mtuq.util.signal import cut, get_arrival, m_to_deg
- 
+
 
 class ProcessData(object):
     """ An attempt at a one-size-fits-all data processing class
@@ -23,9 +23,9 @@ class ProcessData(object):
 
     .. code::
 
-        function = ProcessData(**parameters) 
+        function = ProcessData(**parameters)
 
-    Second, an ObsPy stream is given as input to the data processing function 
+    Second, an ObsPy stream is given as input to the data processing function
     and a processed stream returned as output:
 
     .. code::
@@ -63,7 +63,7 @@ class ProcessData(object):
     ``pick_type`` (`str`)
 
     - ``'taup'``
-      calculates P, S arrival times from Tau-P model 
+      calculates P, S arrival times from Tau-P model
       (uses `obspy.taup.TaupModel.get_arrival_times`)
 
     - ``'FK_metadata'``
@@ -74,6 +74,10 @@ class ProcessData(object):
 
     - ``'user_supplied'``
       reads P, S arrival times from columns 8, 10 of `capuaf_file`
+
+    - ``'auto'``
+      reads non-zero P, S arrival times from columns 8, 10 of `capuaf_file`,
+      and calculates the rest of P, S arrival times from Tau-P model.
 
 
     ``window_type`` (`str`)
@@ -284,6 +288,10 @@ class ProcessData(object):
         elif self.pick_type == 'user_supplied':
              pass
 
+        elif self.pick_type == 'auto':
+            assert self.taup_model is not None
+            self._taup = taup.TauPyModel(self.taup_model)
+
         else:
              raise ValueError('Bad parameter: pick_type, %s' % self.pick_type)
 
@@ -316,6 +324,9 @@ class ProcessData(object):
            self.pick_type == 'user_supplied':
             assert capuaf_file is not None
 
+        if self.pick_type == 'auto':
+            assert capuaf_file is not None
+
         if self.capuaf_file:
             assert exists(capuaf_file)
             parser = WeightParser(self.capuaf_file)
@@ -326,14 +337,15 @@ class ProcessData(object):
         if self.apply_weights:
             self.weights = parser.parse_weights()
 
-        if self.pick_type == 'user_supplied':
+        if self.pick_type == 'user_supplied' or\
+           self.pick_type == 'auto':
             self.picks = parser.parse_picks()
 
 
 
 
     def __call__(self, traces, station=None, origin=None, overwrite=False):
-        ''' 
+        '''
         Carries out data processing operations on obspy streams
         MTUQ GreensTensors
 
@@ -368,7 +380,7 @@ class ProcessData(object):
 
         # Tags can be added through dataset.add_tag to keep track of custom
         # metadata or support other customized uses. Here we use tags to
-        # distinguish data from Green's functions and displacement time series 
+        # distinguish data from Green's functions and displacement time series
         # from velcoity time series
         if not hasattr(traces, 'tags'):
             raise Exception('Missing tags attribute')
@@ -468,14 +480,15 @@ class ProcessData(object):
         else:
             picks = dict()
 
-            if self.pick_type=='taup':
+            if self.pick_type=='taup' or\
+               self.pick_type=='auto':
                 with warnings.catch_warnings():
-                    # supress obspy warning that gets raised even when taup is 
+                    # supress obspy warning that gets raised even when taup is
                     # used correctly (someone should submit an obspy fix)
                     warnings.filterwarnings('ignore')
                     arrivals = self._taup.get_travel_times(
-                        origin.depth_in_m/1000., 
-                        m_to_deg(distance_in_m), 
+                        origin.depth_in_m/1000.,
+                        m_to_deg(distance_in_m),
                         phase_list=['p', 's', 'P', 'S'])
                 try:
                     picks['P'] = get_arrival(arrivals, 'p')
@@ -486,6 +499,10 @@ class ProcessData(object):
                 except:
                     picks['S'] = get_arrival(arrivals, 'S')
 
+            if self.pick_type=='auto':
+                for wavepacket in self.picks[id]:
+                    if not self.picks[id][wavepacket] == 0.0:
+                        picks[wavepacket] = self.picks[id][wavepacket]
 
             elif self.pick_type=='FK_metadata':
                 sac_headers = obspy.read('%s/%s_%s/%s.grn.0' %
@@ -534,17 +551,17 @@ class ProcessData(object):
 
             #
             # part 4b: apply statics
-            # 
+            #
 
             # STATIC CONVETION:  A positive static time shift means synthetics
-            # are arriving too early and need to be shifted in the positive 
-            # direction to match the observed data. 
+            # are arriving too early and need to be shifted in the positive
+            # direction to match the observed data.
 
             if self.apply_statics:
                 try:
                     # _components is a custom metadata attribute added by
                     # mtuq.io.clients. this workaround is needed because of
-                    # certain channel/component conventions are not 
+                    # certain channel/component conventions are not
                     # supported by ObsPy
 
                     # Even though obspy.read doesn't return a stats.component
@@ -554,7 +571,7 @@ class ProcessData(object):
 
                 except:
                     # This way of getting the component from the channel is
-                    # actually what is hardwired into ObsPy, and is implemented 
+                    # actually what is hardwired into ObsPy, and is implemented
                     # here as a fallback
                     component = trace.stats.channel[-1].upper()
 
@@ -573,7 +590,7 @@ class ProcessData(object):
 
             #
             # part 4c: apply padding
-            # 
+            #
 
             # using a longer window for Green's functions than for data allows for
             # more accurate time-shift corrections
@@ -598,4 +615,3 @@ class ProcessData(object):
 
 
         return traces
-
